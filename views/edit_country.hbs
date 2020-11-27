@@ -1,0 +1,18 @@
+{{#extends 'base'}}
+
+{{#block 'title'}}
+Edit Country
+{{/block}}
+
+{{#block 'content'}}
+<h1>Edit Country</h1>
+<form method="POST">
+<div>
+    <label class="form-label">Country Name</label>
+    <input type="text" name="country" class="form-control" value="{{country.country}}"/>
+</div>
+<input type="submit" value="Update" class="btn btn-primary mt-3"/>
+</form>
+{{/block}}
+
+{{/extends}}

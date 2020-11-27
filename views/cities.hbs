@@ -1,0 +1,27 @@
+{{#extends 'base'}}
+
+{{#block 'title'}}Actors{{/block}}
+
+{{#block 'content'}}
+<h1>Cities</h1>
+<table class='table'>
+    <thead>
+        <tr>
+            <th>City ID</th>
+            <th>City Name</th>
+            <th>Country</th>
+            <th>Last Update</th>
+        </tr>
+    </thead>
+    {{#each city}}
+        <tr>
+            <td>{{this.city_id}}</td>
+            <td>{{this.city}}</td>
+            <td>{{this.country}}</td>
+            <td>{{this.last_update}}</td>
+        </tr>
+    {{/each}}
+</table>
+{{/block}}
+
+{{/extends}}

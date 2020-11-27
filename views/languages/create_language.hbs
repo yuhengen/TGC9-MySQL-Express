@@ -1,0 +1,18 @@
+{{#extends 'base'}}
+
+{{#block 'title'}}
+Add Language
+{{/block}}
+
+{{#block 'content'}}
+<h1>Add Language</h1>
+<form method="POST">
+    <div>
+        <label class="form-label">Language</label>
+        <input type="text" name="language" class="form-control"/>
+    </div>
+    <input type="submit" value="Submit" class="btn btn-primary mt-3"/>
+</form>
+{{/block}}
+
+{{/extends}}

@@ -1,0 +1,17 @@
+{{#extends 'base'}}
+
+{{#block 'content'}}
+<h1>Update Existing Actor</h1>
+
+<form method="POST">
+<div class="alert alert-danger">
+    Are you sure you want to delete {{actor.first_name}} {{actor.last_name}}?
+    <div>
+        <input type="submit" value="Yes" class="btn btn-danger"/>
+        <a href="/" class="btn btn-sucess">No</a>
+    </div>    
+</div>
+</form>
+{{/block}}
+
+{{/extends}}
