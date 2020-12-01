@@ -1,0 +1,77 @@
+{{#extends 'base'}}
+
+{{#block "css"}}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+{{/block}}
+
+{{#block 'scripts'}}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#actors').select2();
+    $('#category').select2();
+});
+</script>
+
+{{/block}}
+
+{{#block 'title'}}
+Update Film
+{{/block}}
+
+{{#block 'content'}}
+<h1>Update Film</h1>
+
+<form method="POST">
+    <div>
+        <label class="form-label mt-2">Title</label>
+        <input type="text" class="form-control mt-1" name="title" value="{{wanted_film.title}}"/>
+    </div>
+    <div>
+        <label class="form-label mt-2">Description</label>
+        <textarea class="form-control" name="description">{{wanted_film.description}}</textarea>
+    </div>
+    <div>
+        <label class="form-label mt-2">Actor</label>
+        <select name="actor_id" multiple class="form-control" id="actors">
+            {{#each actors}}
+            <option value="{{this.actor_id}}" {{#inArray  ../existing_actors this.actor_id }}selected{{/inArray}}>{{this.first_name}} {{this.last_name}}</option>
+            {{/each}}
+        </select>
+    </div>
+    <div>
+        <label class="form-label mt-2">Category</label>
+        <select name="category_id" multiple class="form-control" id="category">
+            {{#each category}}
+            <option value="{{this.category_id}}" {{#inArray  ../existing_category this.category_id }}selected{{/inArray}}>{{this.name}}</option>
+            {{/each}}
+        </select>
+    </div>
+    <div>
+        <label class="form-label mt-2">Release Year</label>
+        <input type="text" class="form-control" name="release_year" value="{{wanted_film.release_year}}"/>
+    </div>
+    <div>
+        <label class="form-label mt-2">Language</label>
+        <select name="language_id" class="form-control">
+        {{#each languages}}
+            <option value="{{this.language_id}}" {{#eq this.language_id ../wanted_film.language_id}}selected{{/eq}}>{{this.name}}</option>
+        {{/each}}
+        </select>
+    </div>
+    <div>
+        <label class="form-label mt-2">Rental Duration</label>
+        <input type="text" class="form-control" name="rental_duration" value="{{wanted_film.rental_duration}}"/>
+    </div>
+    <div>
+        <label class="form-label mt-2">Replacement Cost</label>
+        <input type="text" class="form-control" name="replacement_cost" value="{{wanted_film.replacement_cost}}"/>
+    </div>
+
+
+<input type="submit" class="btn btn-primary mt-3" value="Update"/>
+<a href="/films" class="btn btn-primary mt-3"/>Cancel</a>
+</form>
+{{/block}}
+
+{{/extends}}

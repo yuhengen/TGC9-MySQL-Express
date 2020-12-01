@@ -197,7 +197,7 @@ async function main() {
   })
 
   // Display Cities
-  app.get('/city', async (req,res) => {
+  app.get('/cities', async (req,res) => {
       let [city] = await connection.execute(`SELECT * FROM city JOIN country ON city.country_id = country.country_id`)
 
       res.render('cities.hbs', {
@@ -231,7 +231,198 @@ async function main() {
       stores
     });
   });
-}
+
+app.get('/films', async (req,res) => {
+
+    let [results] = await connection.execute(`SELECT * FROM film`)
+
+    res.render('films.hbs', {
+        'films': results
+    })
+})
+
+app.get('/films/create', async (req,res) => {
+    let [languages] = await connection.execute(`SELECT * FROM language`)
+    res.render('create_film', {
+        'languages':languages
+    })
+})
+
+app.post('/films/create', async(req,res) =>{
+    //   res.send(req.body);
+    // traditional method
+    // let title = req.body.title;
+    // let description = req.body.description;
+    // let release_year = req.body.release_year;
+    // let language_id = req.body.language_id;
+    // let rental_duration = req.body.language_id;
+    // let replacement_cost = req.body.replacement_cost;
+
+    // OR use the modern method (object destructuring)
+    let {
+      title,
+      description,
+      release_year,
+      language_id,
+      rental_duration,
+      replacement_cost,
+      actor_id
+    } = req.body;
+
+    let [results] = await connection.execute(
+      `
+        insert into film 
+        ( title, description, release_year, language_id, rental_duration, replacement_cost)
+        values (?, ?, ?, ?, ?, ?)`,
+      [
+        title,
+        description,
+        release_year,
+        language_id,
+        rental_duration,
+        replacement_cost,
+      ]
+    );
+
+    // get the film_id of the film we just created
+    let newFilmId = results.insertId;
+
+    for (let eachActor of actor_id) {
+        connection.execute(`insert into film_actor (actor_id, film_id)
+            values (?, ?)`, [
+                eachActor, newFilmId
+            ])
+    }
+
+    res.redirect('/films');
+});
+
+app.get('/films/:film_id/update', async (req,res) => {
+      let wanted_film_id = req.params.film_id;
+      let [films] = await connection.execute("select * from film where film_id= ?", [wanted_film_id]);
+      let wanted_film = films[0];
+
+      let [languages] = await connection.execute("select * from language");
+
+      // Actors
+      let [actors] = await connection.execute("select * from actor");
+      let [existing_actors] = await connection.execute('select actor_id from film_actor where film_id=?', [wanted_film_id])
+
+      let existing_actor_ids = [];
+      for (let a of existing_actors) {
+          existing_actor_ids.push(a.actor_id);
+      }
+    //   console.log(existing_actor_ids);
+
+      // Categories
+      let [category] = await connection.execute("SELECT * FROM category");
+      let [existing_category] = await connection.execute("SELECT category_id FROM film_category where film_id=?", [wanted_film_id]);
+
+      let existing_category_id = [];
+      for (let c of existing_category) {
+          existing_category_id.push(c.category_id);
+      }
+    //   console.log(existing_category_id);
+
+      return res.render('update_film', {
+          'wanted_film': wanted_film,
+          'languages': languages,
+          'actors': actors,
+          'existing_actors': existing_actor_ids,
+          'category': category,
+          'existing_category': existing_category_id
+      })
+
+  })
+
+  app.post('/films/:film_id/update', async (req, res)=>{
+      console.log("UPDATING FILM");
+      console.log(req.params.film_id);
+    
+    // Actors
+    let [existing_actors] = await connection.execute('select actor_id from film_actor where film_id = ?', [req.params.film_id]);
+
+    let existing_actor_ids = existing_actors.map( a => a.actor_id);  
+    let new_actor_ids = req.body.actor_id;
+    // console.log(existing_actor_ids);
+    // console.log(new_actor_ids); 
+
+    // Categories
+    let [existing_category] = await connection.execute('SELECT category_id from film_category WHERE film_id = ?', [req.params.film_id]);
+
+    let existing_category_id = existing_category.map(c => c.category_id);
+    let new_category_id = req.body.category_id;
+    // console.log(existing_category_id);
+    // console.log(new_category_id);
+
+    try {
+        await connection.beginTransaction();
+
+        // Actors comparison
+        for (let id of existing_actor_ids) {
+            if (new_actor_ids.includes(id + "") == false) {
+                let sql = `delete from film_actor where film_id=${req.params.film_id} AND actor_id=${id}`;
+                // console.log(sql);
+                connection.execute("delete from film_actor where film_id=? AND actor_id=?",[
+                    req.params.film_id, id
+                ])
+            }
+        }
+
+        for (let id of new_actor_ids) {
+            if (existing_actor_ids.includes(parseInt(id)) == false) {
+                connection.execute(`insert into film_actor (film_id, actor_id) values (?, ?)`, [
+                    req.params.film_id, id
+                ])
+            }
+        }
+
+        // Category comparison
+        for (let cat_id of existing_category_id) {
+            if (new_category_id.includes(cat_id+"") == false) {
+                let cat_sql = `DELETE FROM film_category WHERE film_id=${req.params.film_id} AND category_id=${cat_id}`;
+                // console.log(cat_sql);
+                connection.execute("DELETE FROM film_category WHERE film_id=? AND category_id=?", [req.params.film_id,cat_id]);
+            }
+        }
+
+        for (let cat_id of new_category_id) {
+            if (existing_category_id.includes(parseInt(cat_id)) == false) {
+                connection.execute(`INSERT INTO film_category (film_id, category_id) values (?,?)`, [req.params.film_id, cat_id]);
+            }
+        }
+
+        // Easy way for update
+
+
+        await connection.execute(`update film set title=?,
+                                              description=?,
+                                              release_year=?,
+                                              language_id=?,
+                                              rental_duration=?,
+                                              replacement_cost=?
+                                              where film_id = ?`,[
+                                                  req.body.title,
+                                                  req.body.description,
+                                                  req.body.release_year,
+                                                  req.body.language_id,
+                                                  req.body.rental_duration,
+                                                  req.body.replacement_cost,
+                                                  req.params.film_id     
+                                              ])
+
+
+        await connection.commit();
+        res.redirect('/films')
+    } catch (e) {
+        console.log(e);
+        connection.rollback();
+        res.send(e);
+    }
+ 
+})
+
+} // END MAIN
 
 main();
 
