@@ -378,22 +378,43 @@ app.get('/films/:film_id/update', async (req,res) => {
         }
 
         // Category comparison
-        for (let cat_id of existing_category_id) {
-            if (new_category_id.includes(cat_id+"") == false) {
-                let cat_sql = `DELETE FROM film_category WHERE film_id=${req.params.film_id} AND category_id=${cat_id}`;
-                // console.log(cat_sql);
-                connection.execute("DELETE FROM film_category WHERE film_id=? AND category_id=?", [req.params.film_id,cat_id]);
-            }
-        }
+        // for (let cat_id of existing_category_id) {
+        //     if (new_category_id.includes(cat_id+"") == false) {
+        //         let cat_sql = `DELETE FROM film_category WHERE film_id=${req.params.film_id} AND category_id=${cat_id}`;
+        //         // console.log(cat_sql);
+        //         connection.execute("DELETE FROM film_category WHERE film_id=? AND category_id=?", [req.params.film_id,cat_id]);
+        //     }
+        // }
 
-        for (let cat_id of new_category_id) {
-            if (existing_category_id.includes(parseInt(cat_id)) == false) {
-                connection.execute(`INSERT INTO film_category (film_id, category_id) values (?,?)`, [req.params.film_id, cat_id]);
-            }
-        }
+        // for (let cat_id of new_category_id) {
+        //     if (existing_category_id.includes(parseInt(cat_id)) == false) {
+        //         connection.execute(`INSERT INTO film_category (film_id, category_id) values (?,?)`, [req.params.film_id, cat_id]);
+        //     }
+        // }
 
         // Easy way for update
+        // 1. delete all the existing categories from the film
+        await connection.execute("delete from film_category where film_id = ?", [req.params.film_id]);
 
+        // 2. add back all the categories that the user has selected
+        let selectedCategories;
+        // if no categories selected
+        if (!req.body.category_id) {
+            selectedCategories = [];
+        } 
+        // if one category selected
+        if (!Array.isArray(req.body.category_id)) {
+            selectedCategories = [ req.body.category_id];
+        } else {
+            // if > 1 category selected
+            selectedCategories = req.body.category_id;
+        }
+        for (let eachCategoryId of selectedCategories) {
+            connection.execute('insert into film_category (film_id, category_id) values (?, ?)', [
+                req.params.film_id,
+                eachCategoryId
+            ])
+        }
 
         await connection.execute(`update film set title=?,
                                               description=?,
